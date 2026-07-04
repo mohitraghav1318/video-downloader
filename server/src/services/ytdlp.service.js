@@ -1,0 +1,75 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+
+const execFileAsync = promisify(execFile);
+
+export const analyzeVideo = async (url) => {
+  const { stdout } = await execFileAsync("yt-dlp", [
+    "--dump-single-json",
+    "--no-playlist",
+    "--skip-download",
+    url,
+  ]);
+
+  const data = JSON.parse(stdout);
+
+  const rawVideoFormats = data.formats.filter((format) => {
+    return (
+      format.vcodec !== "none" &&
+      format.height &&
+      format.width
+    );
+  });
+
+  const qualityMap = new Map();
+
+  for (const format of rawVideoFormats) {
+    if (!qualityMap.has(format.height)) {
+      qualityMap.set(format.height, {
+        label:
+          format.height === 2160
+            ? "4K"
+            : format.height === 1440
+              ? "2K"
+              : `${format.height}p`,
+
+        height: format.height,
+        width: format.width,
+        fps: format.fps,
+      });
+    }
+  }
+
+  const qualities = Array.from(qualityMap.values()).sort(
+    (a, b) => b.height - a.height
+  );
+
+  return {
+    id: data.id,
+    title: data.title,
+    thumbnail: data.thumbnail,
+    duration: data.duration,
+    channel: data.channel || data.uploader,
+    webpageUrl: data.webpage_url,
+
+    qualities,
+
+    audio: {
+      available: true,
+      formats: [
+        {
+          label: "MP3 128 kbps",
+          bitrate: 128,
+        },
+        {
+          label: "MP3 192 kbps",
+          bitrate: 192,
+        },
+        {
+          label: "MP3 320 kbps",
+          bitrate: 320,
+        },
+      ],
+    },
+  };
+};
