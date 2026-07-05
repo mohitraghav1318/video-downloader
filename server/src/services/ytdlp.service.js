@@ -84,3 +84,31 @@ export const downloadAudio = async (url, bitrate = 192) => {
     stderr,
   };
 };
+
+
+export const downloadVideo = async (url, height = 1080) => {
+  const formatSelector =
+    `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/` +
+    `bestvideo[height<=${height}]+bestaudio/` +
+    `best[height<=${height}]`;
+
+  const args = [
+    "--no-playlist",
+    "-f",
+    formatSelector,
+    "--merge-output-format",
+    "mp4",
+    "-o",
+    "downloads/%(title)s.%(ext)s",
+    url,
+  ];
+
+  const { stdout, stderr } = await execFileAsync("yt-dlp", args, {
+    maxBuffer: 10 * 1024 * 1024,
+  });
+
+  return {
+    stdout,
+    stderr,
+  };
+};
