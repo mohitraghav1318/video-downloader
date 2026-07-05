@@ -87,10 +87,21 @@ export const downloadAudio = async (url, bitrate = 192) => {
 
 
 export const downloadVideo = async (url, height = 1080) => {
-  const formatSelector =
-    `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/` +
-    `bestvideo[height<=${height}]+bestaudio/` +
-    `best[height<=${height}]`;
+  let formatSelector;
+
+  if (height <= 1080) {
+    formatSelector =
+      `bestvideo[height=${height}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/` +
+      `bestvideo[height=${height}]+bestaudio/` +
+      `bestvideo[height<${height}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/` +
+      `bestvideo[height<${height}]+bestaudio`;
+  } else {
+    formatSelector =
+      `bestvideo[height=${height}][vcodec^=vp9]+bestaudio/` +
+      `bestvideo[height=${height}][vcodec^=av01]+bestaudio/` +
+      `bestvideo[height=${height}]+bestaudio/` +
+      `bestvideo[height<${height}]+bestaudio`;
+  }
 
   const args = [
     "--no-playlist",
