@@ -64,12 +64,13 @@ export const downloadMp4 = async (req, res) => {
       });
     }
 
-    await downloadVideo(url, parsedHeight);
+    const result = await downloadVideo(url, parsedHeight);
 
-    return res.status(200).json({
-      success: true,
-      message: `Video downloaded at up to ${parsedHeight}p`,
-    });
+return res.status(200).json({
+  success: true,
+  message: `Video downloaded at ${parsedHeight}p`,
+  format: result.outputFormat,
+});
   } catch (error) {
     console.error("MP4 download error:", error.message);
 

@@ -88,19 +88,27 @@ export const downloadAudio = async (url, bitrate = 192) => {
 
 export const downloadVideo = async (url, height = 1080) => {
   let formatSelector;
+  let outputFormat;
 
   if (height <= 1080) {
+    // Prefer H.264 video + AAC audio
     formatSelector =
       `bestvideo[height=${height}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/` +
       `bestvideo[height=${height}]+bestaudio/` +
       `bestvideo[height<${height}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/` +
       `bestvideo[height<${height}]+bestaudio`;
+
+    outputFormat = "mp4";
   } else {
+    // Prefer VP9 video + Opus audio
     formatSelector =
+      `bestvideo[height=${height}][vcodec^=vp9]+bestaudio[acodec^=opus]/` +
       `bestvideo[height=${height}][vcodec^=vp9]+bestaudio/` +
       `bestvideo[height=${height}][vcodec^=av01]+bestaudio/` +
       `bestvideo[height=${height}]+bestaudio/` +
       `bestvideo[height<${height}]+bestaudio`;
+
+    outputFormat = "webm";
   }
 
   const args = [
@@ -108,7 +116,7 @@ export const downloadVideo = async (url, height = 1080) => {
     "-f",
     formatSelector,
     "--merge-output-format",
-    "mp4",
+    outputFormat,
     "-o",
     "downloads/%(title)s.%(ext)s",
     url,
@@ -121,5 +129,6 @@ export const downloadVideo = async (url, height = 1080) => {
   return {
     stdout,
     stderr,
+    outputFormat,
   };
 };
