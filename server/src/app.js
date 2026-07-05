@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import analyzeRoutes from "./routes/analyze.routes.js";
+import downloadRoutes from "./routes/download.routes.js";
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/analyze", analyzeRoutes);
+app.use("/api/download", downloadRoutes);
 
 export default app;

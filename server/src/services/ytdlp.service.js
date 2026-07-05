@@ -51,25 +51,36 @@ export const analyzeVideo = async (url) => {
     duration: data.duration,
     channel: data.channel || data.uploader,
     webpageUrl: data.webpage_url,
-
     qualities,
 
     audio: {
       available: true,
       formats: [
-        {
-          label: "MP3 128 kbps",
-          bitrate: 128,
-        },
-        {
-          label: "MP3 192 kbps",
-          bitrate: 192,
-        },
-        {
-          label: "MP3 320 kbps",
-          bitrate: 320,
-        },
+        { label: "MP3 128 kbps", bitrate: 128 },
+        { label: "MP3 192 kbps", bitrate: 192 },
+        { label: "MP3 320 kbps", bitrate: 320 },
       ],
     },
+  };
+};
+
+export const downloadAudio = async (url, bitrate = 192) => {
+  const args = [
+    "--no-playlist",
+    "-x",
+    "--audio-format",
+    "mp3",
+    "--audio-quality",
+    `${bitrate}K`,
+    "-o",
+    "downloads/%(title)s.%(ext)s",
+    url,
+  ];
+
+  const { stdout, stderr } = await execFileAsync("yt-dlp", args);
+
+  return {
+    stdout,
+    stderr,
   };
 };
