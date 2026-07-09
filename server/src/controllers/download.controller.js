@@ -42,7 +42,17 @@ export const downloadMp3 = async (req, res) => {
 };
 
 
-const ALLOWED_HEIGHTS = [144, 240, 360, 480, 720, 1080, 1440, 2160];
+const ALLOWED_HEIGHTS = [
+  144,
+  240,
+  360,
+  480,
+  720,
+  1080,
+  1440,
+  2160,
+  4320,
+];
 
 export const downloadMp4 = async (req, res) => {
   try {
@@ -64,19 +74,33 @@ export const downloadMp4 = async (req, res) => {
       });
     }
 
-    const result = await downloadVideo(url, parsedHeight);
+    const result = await downloadVideo(
+      url,
+      parsedHeight
+    );
 
-return res.status(200).json({
-  success: true,
-  message: `Video downloaded at ${parsedHeight}p`,
-  format: result.outputFormat,
-});
+    return res.download(
+      result.filePath,
+      (error) => {
+        if (error) {
+          console.error(
+            "File send error:",
+            error.message
+          );
+        }
+      }
+    );
   } catch (error) {
-    console.error("MP4 download error:", error.message);
+    console.error(
+      "MP4 download error:",
+      error.message
+    );
 
-    return res.status(500).json({
-      success: false,
-      message: "Failed to download video",
-    });
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to download video",
+      });
+    }
   }
 };

@@ -1,6 +1,9 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+import path from "node:path";
+import fs from "node:fs/promises";
+
 const execFileAsync = promisify(execFile);
 
 export const analyzeVideo = async (url) => {
@@ -91,7 +94,6 @@ export const downloadVideo = async (url, height = 1080) => {
   let outputFormat;
 
   if (height <= 1080) {
-    // Prefer H.264 video + AAC audio
     formatSelector =
       `bestvideo[height=${height}][vcodec^=avc1]+bestaudio[acodec^=mp4a]/` +
       `bestvideo[height=${height}]+bestaudio/` +
@@ -100,7 +102,6 @@ export const downloadVideo = async (url, height = 1080) => {
 
     outputFormat = "mp4";
   } else {
-    // Prefer VP9 video + Opus audio
     formatSelector =
       `bestvideo[height=${height}][vcodec^=vp9]+bestaudio[acodec^=opus]/` +
       `bestvideo[height=${height}][vcodec^=vp9]+bestaudio/` +
@@ -111,24 +112,46 @@ export const downloadVideo = async (url, height = 1080) => {
     outputFormat = "webm";
   }
 
+  const downloadDir = path.resolve("downloads");
+
+  await fs.mkdir(downloadDir, {
+    recursive: true,
+  });
+
+  const outputTemplate = path.join(
+    downloadDir,
+    "%(title)s [%(id)s].%(ext)s"
+  );
+
   const args = [
     "--no-playlist",
     "-f",
     formatSelector,
     "--merge-output-format",
     outputFormat,
+    "--print",
+    "after_move:filepath",
     "-o",
-    "downloads/%(title)s.%(ext)s",
+    outputTemplate,
     url,
   ];
 
-  const { stdout, stderr } = await execFileAsync("yt-dlp", args, {
+  const { stdout } = await execFileAsync("yt-dlp", args, {
     maxBuffer: 10 * 1024 * 1024,
   });
 
+  const filePath = stdout
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .at(-1);
+
+  if (!filePath) {
+    throw new Error("Downloaded file path was not returned");
+  }
+
   return {
-    stdout,
-    stderr,
+    filePath,
     outputFormat,
   };
 };
